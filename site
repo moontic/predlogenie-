@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Love in All Languages</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: linear-gradient(135deg, #1a000c, #4a0026, #2b0017, #0d0007);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .text-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            z-index: 2;
+            opacity: 0.9;
+        }
+
+        .marquee-row {
+            white-space: nowrap;
+            overflow: hidden;
+            display: flex;
+            user-select: none;
+        }
+
+        .marquee-content {
+            display: flex;
+            gap: 40px;
+            animation: scroll linear infinite;
+        }
+
+        .phrase {
+            font-size: 1.6rem;
+            font-weight: 600;
+            color: #ffffff;
+            text-shadow: 0 0 10px rgba(255, 105, 180, 0.8),
+                         0 0 20px rgba(255, 20, 147, 0.6),
+                         0 0 30px rgba(255, 0, 128, 0.4);
+            letter-spacing: 1px;
+            transition: transform 0.3s ease, color 0.3s ease;
+        }
+
+        .phrase:hover {
+            transform: scale(1.15);
+            color: #ff69b4;
+            cursor: default;
+        }
+
+        @keyframes scroll {
+            0% {
+                transform: translateX(0);
+            }
+            100% {
+                transform: translateX(-50%);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="heartsCanvas"></canvas>
+
+    <div class="text-container" id="textContainer"></div>
+
+    <script>
+        const phrases = [
+            "Let's make love", "Tengamos sexo", "Faisons l'amour", "Lass uns Sex haben", "Facciamo l'amore",
+            "Vamos transar", "Uprawiajmy seks", "我们做爱吧", "セックスしよう", "لنمارس الجنس",
+            "Давай займемся сексом", "Давай займемося сексом", "Давай займемся сексам", "Pojďme mít sex", "Poďme mať sex",
+            "Нека правим секс", "Хајде да имамо секс", "Idemo imati seks", "Poskrbiva za seks", "Ајде да имаме секс",
+            "Ας κάνουμε σεξ", "Laten we seks hebben", "Låt oss ha sex", "La oss ha sex", "Lad os ha' sex",
+            "Harrastetaan seksiä", "Við skulum stunda kynlíf", "Teeme seksi", "Nodarbosimies ar seksu", "Užsiimkime seksu",
+            "Legyen szexünk", "Să facem sex", "Sevişelim", "Le të bëjmë seks", "Եկեք սեքսով զբաղվենք",
+            "მოდი სექსით დაკავდეთ", "Cinsi əlaqədə olaq", "Секспен айналысайық", "Jinsiy aloqada bo'laylik", "Секс менен алектенели",
+            "Jynsy gatnaşykda bolalyň", "Секс белән шөгыльләнәек", "Бид бэлгийн харьцаанд орцгооё", "성관계합시다", "Hãy quan hệ tình dục",
+            "มามี sex กันเถอะ", "Mari bercinta", "Jom buat seks", "Magtalik tayo", "चलो सेक्स करते हैं",
+            "চলো সেক্স করি", "ਆਉ sex ਕਰੀਏ", "ચાલો સેક્સ કરીએ", "ચલા सेक्स करूया", "உடலுறவு கொள்வோம்",
+            "శృంగారంలో పాల్గొందాం", "ಲೈಂಗಿಕತೆ ಮಾಡೋಣ", "ലൈംഗിക ബന്ധത്തിൽ ഏർപ്പെടാം", "ලිංගිකව එක් වෙමු", "လိင်ဆက်ဆံကြရအောင်",
+            "بیایید رابطه جنسی داشته باشیم", "چلیے سیکس کرتے ہیں", "راځئ چې جنسي اړیکه ونیسو", "Werin em seks bikin", "בוא נעשה סקס",
+            "Tufanye ngono", "Jẹ a ni ibalopọ", "Ka anyị nwee mmekọahụ", "Bari mu yi jima'i", "Ake sabelane ngocansi",
+            "Masiyeni ngesondo", "Kom ons het seks", "Maghilawas ta", "Kia whai rēhia", "Sau tatou feusuaʻi",
+            "E moe kāua", "Ni hax sekson", "Faciamus coitum", "Bíodh gnéas againn", "Bitheadh gnè againn",
+            "Dewch i gael rhyw", "Sexua izan dezagun", "Fem el sexe", "Facemos sexo", "Ejja nagħmlu sess",
+            "Looss eis Sex hunn", "זאָלן מיר האָבן סעקס", "Hajde da imamo seks", "Hayu urang ngalakukeun séks", "Ayo nindakake sèks",
+            "តោះរួមភេទជាមួយគ្នា", "ມາ​ມີ​ເພດ​สัมพันธ์​ກັນ", "चलो सेक्स गरौं", "Aan galmoono", "جنسي ርክብ ንግበር",
+            "Andao hanao firaisana", "Litte we seks hawwe", "Nwayi nwee mmekọahụ", "Femus sesso", "Hagamos el amor"
+        ];
+
+        // 1. Создание бегущих строк с текстом
+        const container = document.getElementById('textContainer');
+        const rowsCount = 12;
+        const phrasesPerRow = Math.ceil(phrases.length / rowsCount);
+
+        for (let i = 0; i < rowsCount; i++) {
+            const row = document.createElement('div');
+            row.className = 'marquee-row';
+
+            const marqueeContent = document.createElement('div');
+            marqueeContent.className = 'marquee-content';
+
+            const rowPhrases = phrases.slice(i * phrasesPerRow, (i + 1) * phrasesPerRow);
+            const extendedPhrases = [...rowPhrases, ...rowPhrases, ...rowPhrases];
+
+            extendedPhrases.forEach(text => {
+                const span = document.createElement('span');
+                span.className = 'phrase';
+                span.textContent = text + "  •  ";
+                marqueeContent.appendChild(span);
+            });
+
+            // Случайная скорость и направление
+            const duration = 25 + Math.random() * 20;
+            const direction = i % 2 === 0 ? 'normal' : 'reverse';
+            marqueeContent.style.animationDuration = `${duration}s`;
+            marqueeContent.style.animationDirection = direction;
+
+            row.appendChild(marqueeContent);
+            container.appendChild(row);
+        }
+
+        // 2. Анимация сердечек на Canvas
+        const canvas = document.getElementById('heartsCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        class Heart {
+            constructor() {
+                this.reset();
+            }
+
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = canvas.height + Math.random() * 100;
+                this.size = 10 + Math.random() * 25;
+                this.speedY = 1 + Math.random() * 2;
+                this.speedX = (Math.random() - 0.5) * 1;
+                this.opacity = 0.3 + Math.random() * 0.6;
+                this.color = `hsl(${330 + Math.random() * 30}, 100%, ${60 + Math.random() * 20}%)`;
+                this.swing = Math.random() * Math.PI * 2;
+                this.swingSpeed = 0.02 + Math.random() * 0.03;
+            }
+
+            update() {
+                this.y -= this.speedY;
+                this.swing += this.swingSpeed;
+                this.x += Math.sin(this.swing) + this.speedX;
+
+                if (this.y < -50) {
+                    this.reset();
+                }
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.globalAlpha = this.opacity;
+                ctx.fillStyle = this.color;
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = this.color;
+
+                ctx.beginPath();
+                const topCurveHeight = this.size * 0.3;
+                ctx.moveTo(0, topCurveHeight);
+                ctx.bezierCurveTo(0, 0, -this.size / 2, 0, -this.size / 2, topCurveHeight);
+                ctx.bezierCurveTo(-this.size / 2, (this.size + topCurveHeight) / 2, 0, this.size, 0, this.size);
+                ctx.bezierCurveTo(0, this.size, this.size / 2, (this.size + topCurveHeight) / 2, this.size / 2, topCurveHeight);
+                ctx.bezierCurveTo(this.size / 2, 0, 0, 0, 0, topCurveHeight);
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.restore();
+            }
+        }
+
+        const hearts = Array.from({ length: 45 }, () => new Heart());
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            hearts.forEach(heart => {
+                heart.update();
+                heart.draw();
+            });
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+    </script>
+</body>
+</html>
